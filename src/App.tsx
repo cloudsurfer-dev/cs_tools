@@ -8,7 +8,7 @@ import { HashRouter, Routes, Route, NavLink } from "react-router-dom";
 function App() {
     return (
         <HashRouter>
-            <div className="min-h-screen bg-zinc-950 text-zinc-100">
+            <div className="min-h-screen bg-gray-900 text-zinc-500">
 
                 <header className="w-full border-b border-zinc-800 bg-zinc-900">
                     <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
@@ -32,7 +32,7 @@ function App() {
                     </div>
                 </header>
 
-                <main className="mx-auto max-w-6xl px-6 py-10">
+                <main className="mx-auto max-w-8xl px-6 py-10">
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/macfixer" element={<MacFixer />} />

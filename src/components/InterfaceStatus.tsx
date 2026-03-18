@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-// --- Constants ---
 const STATUS_OPTIONS = ["connected", "notconnect", "disabled", "err-disabled"] as const;
 type Status = (typeof STATUS_OPTIONS)[number];
 
@@ -16,20 +15,17 @@ const COLOR_PALETTE = [
 ];
 const DEFAULT_COLOR = "bg-gray-400";
 
-// --- Types ---
 interface Port {
-    port: string;  // full port name like "Gi1/0/1"
-    name: string;  // optional description
+    port: string;
+    name: string;
     status: Status | "unknown";
     vlan: string;
 }
 
-// --- Component ---
 export const InterfaceStatus = () => {
     const [dump, setDump] = useState("");
     const [ports, setPorts] = useState<Port[]>([]);
 
-    // --- Parse a single line ---
     const parseLine = (line: string): Port | null => {
         const portMatch = line.match(/Gi\d+\/\d+\/\d+/);
         if (!portMatch) return null;
@@ -49,7 +45,6 @@ export const InterfaceStatus = () => {
         return { port: portStr, name, status, vlan };
     };
 
-    // --- Parse the textarea ---
     const parse = () => {
         const lines = dump.split("\n");
         const parsed = lines
@@ -58,7 +53,6 @@ export const InterfaceStatus = () => {
         setPorts(parsed);
     };
 
-    // --- Dynamic VLAN → color mapping ---
     const vlanToColorMap = (() => {
         const map = new Map<string, string>();
         let colorIndex = 0;
@@ -75,7 +69,6 @@ export const InterfaceStatus = () => {
         return vlanToColorMap.get(vlan) || DEFAULT_COLOR;
     };
 
-    // --- Prepare port layout (1–48) ---
     const portNumbers = Array.from({ length: 48 }, (_, i) => i + 1);
     const getPortData = (portNumber: number): Port | undefined =>
         ports.find((p) => {
@@ -86,12 +79,10 @@ export const InterfaceStatus = () => {
     const odd = portNumbers.filter((p) => p % 2 !== 0);
     const even = portNumbers.filter((p) => p % 2 === 0);
 
-    // --- Cell text: up/down ---
     const getCellText = (status?: Status | "unknown") => (status === "connected" ? "up" : "down");
 
     return (
         <div className="p-4 space-y-4">
-            {/* Input */}
             <textarea
                 className="border w-full h-40 p-2"
                 value={dump}
@@ -101,74 +92,67 @@ export const InterfaceStatus = () => {
             <button className="px-4 py-2 bg-blue-500 text-white" onClick={parse}>
                 Parse
             </button>
-
-            {/* SWITCH GRID */}
-            <div className="flex flex-col gap-1 mt-4">
-                {/* Top port numbers */}
-                <div className="flex gap-2">
-                    {odd.map((num) => (
-                        <div key={num} className="w-16 text-center text-xs font-semibold">
-                            {num}
-                        </div>
-                    ))}
-                </div>
-
-                {/* Top row (odd) */}
-                <div className="flex gap-2">
-                    {odd.map((num) => {
-                        const data = getPortData(num);
-                        const cellText = getCellText(data?.status);
-                        return (
-                            <div
-                                key={num}
-                                className={`w-16 h-16 flex items-center justify-center text-sm text-black ${getColor(
-                                    data?.vlan ?? "unknown"
-                                )}`}
-                                title={`Port: ${data?.port ?? num}\nName: ${data?.name || "-"}\nStatus: ${cellText}\nVLAN: ${data?.vlan ?? "-"}`}
-                            >
-                                {cellText}
+            <div className="flex justify-center">
+                <div className="flex flex-col gap-1 mt-4">
+                    <div className="flex gap-2">
+                        {odd.map((num) => (
+                            <div key={num} className="w-16 text-center font-bold">
+                                {num}
                             </div>
-                        );
-                    })}
-                </div>
+                        ))}
+                    </div>
 
-                {/* Bottom row (even) */}
-                <div className="flex gap-2">
-                    {even.map((num) => {
-                        const data = getPortData(num);
-                        const cellText = getCellText(data?.status);
-                        return (
-                            <div
-                                key={num}
-                                className={`w-16 h-16 flex items-center justify-center text-sm text-black ${getColor(
-                                    data?.vlan ?? "unknown"
-                                )}`}
-                                title={`Port: ${data?.port ?? num}\nName: ${data?.name || "-"}\nStatus: ${cellText}\nVLAN: ${data?.vlan ?? "-"}`}
-                            >
-                                {cellText}
+                    <div className="flex gap-2">
+                        {odd.map((num) => {
+                            const data = getPortData(num);
+                            const cellText = getCellText(data?.status);
+                            return (
+                                <div
+                                    key={num}
+                                    className={`w-16 h-12 flex items-center justify-center  font-semibold text-black ${getColor(
+                                        data?.vlan ?? "unknown"
+                                    )}`}
+                                    title={`Port: ${data?.port ?? num}\nName: ${data?.name || "-"}\nStatus: ${cellText}\nVLAN: ${data?.vlan ?? "-"}`}
+                                >
+                                    {cellText}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="flex gap-2 mt-4">
+                        {even.map((num) => {
+                            const data = getPortData(num);
+                            const cellText = getCellText(data?.status);
+                            return (
+                                <div
+                                    key={num}
+                                    className={`w-16 h-12 flex items-center justify-center  font-semibold text-black ${getColor(
+                                        data?.vlan ?? "unknown"
+                                    )}`}
+                                    title={`Port: ${data?.port ?? num}\nName: ${data?.name || "-"}\nStatus: ${cellText}\nVLAN: ${data?.vlan ?? "-"}`}
+                                >
+                                    {cellText}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="flex gap-2">
+                        {even.map((num) => (
+                            <div key={num} className="w-16 text-center font-bold">
+                                {num}
                             </div>
-                        );
-                    })}
-                </div>
-
-                {/* Bottom port numbers */}
-                <div className="flex gap-2">
-                    {even.map((num) => (
-                        <div key={num} className="w-16 text-center text-xs font-semibold">
-                            {num}
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
-
-            {/* VLAN LEGEND */}
-            <div className="mt-4">
-                <h3 className="font-semibold mb-2">VLAN Legend</h3>
+            <div className="flex justify-center mt-4">
                 <div className="flex flex-wrap gap-2">
                     {Array.from(vlanToColorMap.entries()).map(([vlan, color]) => (
                         <div
                             key={vlan}
-                            className={`flex items-center gap-1 px-2 py-1 ${color} text-black text-xs rounded`}
+                            className={`flex items-center justify-center text-center w-16 gap-1 px-2 py-1 ${color} text-black font-semibold rounded`}
                         >
                             {vlan}
                         </div>

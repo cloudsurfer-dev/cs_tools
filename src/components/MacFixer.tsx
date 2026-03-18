@@ -26,12 +26,14 @@ export const MacFixer = () => {
     }
     return (
     <>
-        <div className="">
-            <button onClick={copyToClipboard}>Copy</button>
-            <div>
-                <textarea onChange={handlePaste} value={input} rows={10} className=""/>
-                <textarea value={output?.join('\n')} rows={10} className="" readOnly/>
+        <div className="flex justify-center">
+            <div className="mb-2">
+                <textarea onChange={handlePaste} value={input} rows={10} className="border-1"/>
+                <textarea value={output?.join('\n')} rows={10} className="border-1 ml-2" readOnly/>
             </div>
+        </div>
+        <div className="flex justify-center">
+            <button onClick={copyToClipboard}>Copy</button>
         </div>
     </>
   )
