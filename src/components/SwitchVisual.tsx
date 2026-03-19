@@ -1,0 +1,145 @@
+import type {Port} from "./Types.ts";
+import type {DeviceMap} from "./BuildDeviceMap.ts";
+
+const COLOR_PALETTE = [
+    "bg-blue-400",
+    "bg-green-400",
+    "bg-yellow-400",
+    "bg-purple-400",
+    "bg-pink-400",
+    "bg-orange-400",
+    "bg-cyan-400",
+    "bg-teal-400",
+    "bg-red-400",
+    "bg-indigo-400",
+    "bg-lime-400",
+    "bg-amber-400",
+    "bg-violet-400",
+    "bg-emerald-400",
+];
+
+const DEFAULT_COLOR = "bg-gray-400";
+
+export type DisplayMode = "status" | "vlan" | "ip" | "hostname";
+
+export interface DisplayModeOption {
+    value: DisplayMode;
+    label: string;
+    requiresDevice: boolean;
+}
+
+export const DISPLAY_MODES: DisplayModeOption[] = [
+    { value: "status",   label: "Up / Down", requiresDevice: false },
+    { value: "vlan",     label: "VLAN",      requiresDevice: false },
+    { value: "ip",       label: "IP",        requiresDevice: true  },
+    { value: "hostname", label: "Hostname",  requiresDevice: true  },
+];
+
+interface SwitchVisualProps {
+    ports: Port[];
+    displayMode: DisplayMode;
+    deviceMap: DeviceMap;
+}
+
+const buildVlanColorMap = (ports: Port[]): Map<string, string> => {
+    const map = new Map<string, string>();
+    let colorIndex = 0;
+    for (const p of ports) {
+        if (!map.has(p.vlan)) {
+            map.set(p.vlan, COLOR_PALETTE[colorIndex] ?? DEFAULT_COLOR);
+            colorIndex++;
+        }
+    }
+    return map;
+};
+
+const getPortData = (ports: Port[], portNumber: number): Port | undefined =>
+    ports.find((p) => {
+        const match = p.port.match(/(\d+)$/);
+        return match ? Number(match[1]) === portNumber : false;
+    });
+
+const getCellText = (port: Port | undefined, mode: DisplayMode, deviceMap: DeviceMap): string => {
+    if (!port) return "-";
+    const device = deviceMap.get(port.port);
+    switch (mode) {
+        case "status":
+            return port.status === "connected" ? "up" : "down";
+        case "vlan":
+            return port.vlan;
+        case "ip":
+            return device?.ip?.split(".").slice(-2).join(".") ?? "-";
+        case "hostname":
+            return device?.hostname ?? "-";
+    }
+};
+
+const buildTooltip = (port: Port | undefined, portNumber: number, deviceMap: DeviceMap): string => {
+    if (!port) return `Port: ${portNumber}\nNo data`;
+    const device = deviceMap.get(port.port);
+    return [
+        `Port:     ${port.port}`,
+        `Name:     ${port.name || "-"}`,
+        `Status:   ${port.status}`,
+        `VLAN:     ${port.vlan}`,
+        `MAC:      ${device?.mac      ?? "-"}`,
+        `IP:       ${device?.ip       ?? "-"}`,
+        `Hostname: ${device?.hostname ?? "-"}`,
+    ].join("\n");
+};
+
+export const SwitchVisual = ({ ports, displayMode, deviceMap }: SwitchVisualProps) => {
+    const vlanColorMap = buildVlanColorMap(ports);
+
+    const portNumbers = Array.from({ length: 48 }, (_, i) => i + 1);
+    const odd  = portNumbers.filter((n) => n % 2 !== 0);
+    const even = portNumbers.filter((n) => n % 2 === 0);
+
+    const renderPort = (num: number) => {
+        const data  = getPortData(ports, num);
+        const color = vlanColorMap.get(data?.vlan ?? "") ?? DEFAULT_COLOR;
+        return (
+            <div
+                key={num}
+                className={`w-16 h-12 flex items-center justify-center font-semibold text-black text-xs ${color}`}
+                title={buildTooltip(data, num, deviceMap)}
+            >
+                {getCellText(data, displayMode, deviceMap)}
+            </div>
+        );
+    };
+
+    return (
+        <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col gap-1">
+                <div className="flex gap-2">
+                    {odd.map((num) => (
+                        <div key={num} className="w-16 text-center font-bold">{num}</div>
+                    ))}
+                </div>
+                <div className="flex gap-2">
+                    {odd.map(renderPort)}
+                </div>
+                <div className="flex gap-2 mt-4">
+                    {even.map(renderPort)}
+                </div>
+                <div className="flex gap-2">
+                    {even.map((num) => (
+                        <div key={num} className="w-16 text-center font-bold">{num}</div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 justify-center">
+                {Array.from(vlanColorMap.entries()).map(([vlan, color]) => (
+                    <div
+                        key={vlan}
+                        className={`w-16 flex items-center justify-center px-2 py-1 ${color} text-black font-semibold rounded text-center`}
+                    >
+                        {vlan}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};

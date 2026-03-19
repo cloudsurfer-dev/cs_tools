@@ -1,6 +1,6 @@
 import './App.css'
 import {MacFixer} from "./components/MacFixer.tsx";
-import {InterfaceStatus} from "./components/InterfaceStatus.tsx";
+import {SwitchMap} from "./components/SwitchMap.tsx";
 import {Home} from "./components/Home.tsx";
 import { HashRouter, Routes, Route, NavLink } from "react-router-dom";
 
@@ -24,8 +24,8 @@ function App() {
                             <NavLink to="/macfixer" className="hover:text-white transition-colors [&.active]:text-white [&.active]:font-medium">
                                 MAC Fixer
                             </NavLink>
-                            <NavLink to="/vlanmapper" className="hover:text-white transition-colors [&.active]:text-white [&.active]:font-medium">
-                                VLAN Mapper
+                            <NavLink to="/switchmap" className="hover:text-white transition-colors [&.active]:text-white [&.active]:font-medium">
+                                Switch Map
                             </NavLink>
                         </nav>
 
@@ -36,7 +36,7 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/macfixer" element={<MacFixer />} />
-                        <Route path="/vlanmapper" element={<InterfaceStatus />} />
+                        <Route path="/SwitchMap" element={<SwitchMap />} />
                     </Routes>
                 </main>
 
