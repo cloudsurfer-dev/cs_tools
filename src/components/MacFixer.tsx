@@ -28,8 +28,8 @@ export const MacFixer = () => {
     <>
         <div className="flex justify-center">
             <div className="mb-2">
-                <textarea onChange={handlePaste} value={input} rows={10} className="border-1"/>
-                <textarea value={output?.join('\n')} rows={10} className="border-1 ml-2" readOnly/>
+                <textarea onChange={handlePaste} value={input} rows={10} className="border"/>
+                <textarea value={output?.join('\n')} rows={10} className="border ml-2" readOnly/>
             </div>
         </div>
         <div className="flex justify-center">
