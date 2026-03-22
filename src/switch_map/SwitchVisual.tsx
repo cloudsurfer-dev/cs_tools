@@ -1,25 +1,6 @@
 import type {Port} from "./Types.ts";
 import type {DeviceMap} from "./BuildDeviceMap.ts";
 
-const COLOR_PALETTE = [
-    "bg-blue-400",
-    "bg-green-400",
-    "bg-yellow-400",
-    "bg-purple-400",
-    "bg-pink-400",
-    "bg-orange-400",
-    "bg-cyan-400",
-    "bg-teal-400",
-    "bg-red-400",
-    "bg-indigo-400",
-    "bg-lime-400",
-    "bg-amber-400",
-    "bg-violet-400",
-    "bg-emerald-400",
-];
-
-const DEFAULT_COLOR = "bg-gray-400";
-
 export type DisplayMode = "status" | "vlan" | "ip" | "hostname";
 
 export interface DisplayModeOption {
@@ -28,6 +9,7 @@ export interface DisplayModeOption {
     requiresDevice: boolean;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const DISPLAY_MODES: DisplayModeOption[] = [
     { value: "status",   label: "Up / Down", requiresDevice: false },
     { value: "vlan",     label: "VLAN",      requiresDevice: false },
@@ -39,19 +21,8 @@ interface SwitchVisualProps {
     ports: Port[];
     displayMode: DisplayMode;
     deviceMap: DeviceMap;
+    vlanColorMap: Map<string, string>;
 }
-
-const buildVlanColorMap = (ports: Port[]): Map<string, string> => {
-    const map = new Map<string, string>();
-    let colorIndex = 0;
-    for (const p of ports) {
-        if (!map.has(p.vlan)) {
-            map.set(p.vlan, COLOR_PALETTE[colorIndex] ?? DEFAULT_COLOR);
-            colorIndex++;
-        }
-    }
-    return map;
-};
 
 const getPortData = (ports: Port[], portNumber: number): Port | undefined =>
     ports.find((p) => {
@@ -63,14 +34,10 @@ const getCellText = (port: Port | undefined, mode: DisplayMode, deviceMap: Devic
     if (!port) return "-";
     const device = deviceMap.get(port.port);
     switch (mode) {
-        case "status":
-            return port.status === "connected" ? "up" : "down";
-        case "vlan":
-            return port.vlan;
-        case "ip":
-            return device?.ip?.split(".").slice(-2).join(".") ?? "-";
-        case "hostname":
-            return device?.hostname ?? "-";
+        case "status":   return port.status === "connected" ? "up" : "down";
+        case "vlan":     return port.vlan;
+        case "ip":       return device?.ip?.split(".").slice(-2).join(".") ?? "-";
+        case "hostname": return device?.hostname ?? "-";
     }
 };
 
@@ -88,16 +55,14 @@ const buildTooltip = (port: Port | undefined, portNumber: number, deviceMap: Dev
     ].join("\n");
 };
 
-export const SwitchVisual = ({ ports, displayMode, deviceMap }: SwitchVisualProps) => {
-    const vlanColorMap = buildVlanColorMap(ports);
-
+export const SwitchVisual = ({ ports, displayMode, deviceMap, vlanColorMap }: SwitchVisualProps) => {
     const portNumbers = Array.from({ length: 48 }, (_, i) => i + 1);
     const odd  = portNumbers.filter((n) => n % 2 !== 0);
     const even = portNumbers.filter((n) => n % 2 === 0);
 
     const renderPort = (num: number) => {
         const data  = getPortData(ports, num);
-        const color = vlanColorMap.get(data?.vlan ?? "") ?? DEFAULT_COLOR;
+        const color = vlanColorMap.get(data?.vlan ?? "") ?? "bg-gray-200";
         return (
             <div
                 key={num}
@@ -128,17 +93,6 @@ export const SwitchVisual = ({ ports, displayMode, deviceMap }: SwitchVisualProp
                         <div key={num} className="w-16 text-center font-bold">{num}</div>
                     ))}
                 </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2 justify-center">
-                {Array.from(vlanColorMap.entries()).map(([vlan, color]) => (
-                    <div
-                        key={vlan}
-                        className={`w-16 flex items-center justify-center px-2 py-1 ${color} text-black font-semibold rounded text-center`}
-                    >
-                        {vlan}
-                    </div>
-                ))}
             </div>
         </div>
     );

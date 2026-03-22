@@ -1,7 +1,7 @@
 import './App.css'
-import {MacFixer} from "./components/MacFixer.tsx";
-import {SwitchMap} from "./components/SwitchMap.tsx";
-import {Home} from "./components/Home.tsx";
+import {MacFixer} from "./pages/MacFixer.tsx";
+import {SwitchMap} from "./pages/SwitchMap.tsx";
+import {Home} from "./pages/Home.tsx";
 import { HashRouter, Routes, Route, NavLink } from "react-router-dom";
 
 
