@@ -6,7 +6,8 @@ import { parseInfoblox } from "../switch_map/ParseInfoBlox.ts";
 import { buildDeviceMap, type DeviceMap } from "../switch_map/BuildDeviceMap.ts";
 import { VLAN_COLORS } from "../switch_map/VlanColors.ts";
 import { PingTool } from "../switch_map/PingTool.tsx";
-import {InfoPopOver} from "../components/InfoPopOver.tsx";
+import { InfoPopOver } from "../components/InfoPopOver.tsx";
+import { exportXlsx } from "../switch_map/ExportXlsx.ts";
 
 const COLOR_PALETTE = [
     "bg-yellow-400",
@@ -107,9 +108,19 @@ export const SwitchMap = () => {
     return (
         <div className="p-4 space-y-4">
             <div className="space-y-2">
-                <label className="font-semibold text-sm flex items-center">
-                    <span className="mr-2">show interfaces status</span>
-                    <InfoPopOver>Paste the output from "sh int status"</InfoPopOver>
+                <label className="flex justify-between items-center">
+                    <div className="font-semibold text-sm flex items-center">
+                        <span className="mr-2">show interfaces status</span>
+                        <InfoPopOver>Paste the output from "sh int status"</InfoPopOver>
+                    </div>
+                    <div>
+                        <button
+                            onClick={() => exportXlsx(ports, deviceMap)}
+                            className="px-4 py-2 font-semibold rounded bg-green-600 text-black ml-auto"
+                        >
+                            Export to Excel
+                        </button>
+                    </div>
                 </label>
                 <textarea
                     className="border w-full h-32 p-2 font-mono text-sm"

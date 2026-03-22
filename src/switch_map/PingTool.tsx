@@ -14,7 +14,7 @@ const buildRunCommand = (networks: string[]): string => {
 };
 
 const downloadScript = async () => {
-    const response = await fetch("/PingSweep.ps1");
+    const response = await fetch("PingSweep.ps1");
     const blob     = await response.blob();
     const url      = URL.createObjectURL(blob);
     const a        = document.createElement("a");
