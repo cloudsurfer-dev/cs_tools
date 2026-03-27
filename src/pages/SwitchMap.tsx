@@ -1,27 +1,12 @@
 import { useState } from "react";
-import { STATUS_OPTIONS, type Port } from "../switch_map/Types.ts";
+import { type Port } from "../switch_map/Types.ts";
 import { SwitchVisual, type DisplayMode, DISPLAY_MODES } from "../switch_map/SwitchVisual.tsx";
-import { parseMacTable } from "../switch_map/ParseMacTable.ts";
-import { parseInfoblox } from "../switch_map/ParseInfoBlox.ts";
-import { buildDeviceMap, type DeviceMap } from "../switch_map/BuildDeviceMap.ts";
-import { VLAN_COLORS } from "../switch_map/VlanColors.ts";
+import { parseIntStatus } from "../switch_map/Parsers/ParseIntStatus.ts";
+import { buildDeviceMapFromRaw, type DeviceMap } from "../switch_map/BuildDeviceMap.ts";
+import { buildVlanColorMap } from "../switch_map/VlanColors.ts";
 import { PingTool } from "../switch_map/PingTool.tsx";
 import { InfoPopOver } from "../components/InfoPopOver.tsx";
 import { exportXlsx } from "../switch_map/ExportXlsx.ts";
-
-const COLOR_PALETTE = [
-    "bg-yellow-400",
-    "bg-pink-400",
-    "bg-orange-400",
-    "bg-cyan-200",
-    "bg-teal-700",
-    "bg-red-400",
-    "bg-indigo-500",
-    "bg-lime-400",
-    "bg-amber-400",
-    "bg-violet-300",
-    "bg-emerald-400",
-];
 
 interface SwitchGroup {
     label: string;
@@ -29,28 +14,11 @@ interface SwitchGroup {
     ports: Port[];
 }
 
-const parseLine = (line: string): Port | null => {
-    const portMatch = line.match(/^(Gi|Fa|Te|Eth|Po)\d+(?:\/\d+)+/i);
-    if (!portMatch) return null;
-    const portStr = portMatch[0];
-
-    const rest = line.slice(line.indexOf(portStr) + portStr.length).trim();
-
-    const statusIndex = STATUS_OPTIONS.map((s) => rest.indexOf(s)).find((i) => i !== -1);
-    if (statusIndex === undefined) return null;
-
-    const name   = rest.slice(0, statusIndex).trim();
-    const after  = rest.slice(statusIndex).trim().split(/\s+/);
-    const status = after[0] as Port["status"];
-    const vlan   = after[1] ?? "unknown";
-
-    return { port: portStr, name, status, vlan };
-};
-
 const groupBySwitchNumber = (ports: Port[]): SwitchGroup[] => {
     const grouped = new Map<string, Port[]>();
     for (const port of ports) {
-        const match = port.port.match(/^(?:Gi|Fa|Te|Eth|Po)(\d+)/i);
+        // Cisco: Gi1/0/1 -> key "1", Aruba: 1/1 -> key "1"
+        const match = port.port.match(/^(?:[A-Za-z]+)?(\d+)/);
         const key   = match?.[1] ?? "1";
         grouped.set(key, [...(grouped.get(key) ?? []), port]);
     }
@@ -59,51 +27,20 @@ const groupBySwitchNumber = (ports: Port[]): SwitchGroup[] => {
         .map(([num, ports]) => ({ label: `Switch ${num}`, switchNumber: num, ports }));
 };
 
-const buildVlanColorMap = (ports: Port[]): Map<string, string> => {
-    // Collect all unique VLANs across all ports in order of first appearance
-    const vlans = [...new Set(ports.map((p) => p.vlan))];
-
-    // Palette colours not already claimed by VLAN_COLORS
-    const claimedColors  = new Set(Object.values(VLAN_COLORS));
-    const availablePalette = COLOR_PALETTE.filter((c) => !claimedColors.has(c));
-
-    const map = new Map<string, string>();
-    let paletteIndex = 0;
-
-    for (const vlan of vlans) {
-        if (VLAN_COLORS[vlan]) {
-            map.set(vlan, VLAN_COLORS[vlan]);
-        } else {
-            map.set(vlan, availablePalette[paletteIndex % availablePalette.length]);
-            paletteIndex++;
-        }
-    }
-
-    return map;
-};
-
 export const SwitchMap = () => {
     const [intStatusDump, setIntStatusDump] = useState("");
     const [macTableDump,  setMacTableDump]  = useState("");
     const [infobloxDump,  setInfobloxDump]  = useState("");
     const [displayMode,   setDisplayMode]   = useState<DisplayMode>("status");
 
-    const ports: Port[] = intStatusDump
-        .split("\n")
-        .map(parseLine)
-        .filter((p): p is Port => p !== null);
+    const { ports } = parseIntStatus(intStatusDump);
 
-    const switchGroups  = groupBySwitchNumber(ports);
-    const vlanColorMap  = buildVlanColorMap(ports);
-
-    const deviceMap: DeviceMap = (() => {
-        if (!macTableDump.trim() || !infobloxDump.trim()) return new Map();
-        const macToPort   = parseMacTable(macTableDump);
-        const infobloxMap = parseInfoblox(infobloxDump);
-        return buildDeviceMap(macToPort, infobloxMap);
-    })();
-
+    const switchGroups = groupBySwitchNumber(ports);
+    const vlanColorMap = buildVlanColorMap(ports);
+    const deviceMap: DeviceMap = buildDeviceMapFromRaw(macTableDump, infobloxDump);
     const hasDeviceData = deviceMap.size > 0;
+
+    console.log("hi");
 
     return (
         <div className="p-4 space-y-4">
@@ -113,14 +50,12 @@ export const SwitchMap = () => {
                         <span className="mr-2">show interfaces status</span>
                         <InfoPopOver>Paste the output from "sh int status"</InfoPopOver>
                     </div>
-                    <div>
-                        <button
-                            onClick={() => exportXlsx(ports, deviceMap)}
-                            className="px-4 py-2 font-semibold rounded bg-green-600 text-black ml-auto"
-                        >
-                            Export to Excel
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => exportXlsx(ports, deviceMap)}
+                        className="px-4 py-2 font-semibold rounded bg-green-600 text-black"
+                    >
+                        Export to Excel
+                    </button>
                 </label>
                 <textarea
                     className="border w-full h-32 p-2 font-mono text-sm"
@@ -150,9 +85,8 @@ export const SwitchMap = () => {
                         <label className="font-semibold text-sm flex items-center">
                             <span className="mr-2">Infoblox CSV</span>
                             <InfoPopOver>
-                                Paste a CSV export from infoblox that has (in order): IP, Hostname, MAC.
-                                <br/>
-                                Any additional fields aren't an issue.
+                                Paste a CSV export from Infoblox that has IP, Hostname and MAC columns.
+                                Additional fields are ignored.
                             </InfoPopOver>
                         </label>
                         <textarea
@@ -184,7 +118,6 @@ export const SwitchMap = () => {
                         ))}
                     </div>
 
-                    {/* Shared VLAN legend */}
                     <div className="flex flex-wrap gap-2 justify-center">
                         {Array.from(vlanColorMap.entries()).map(([vlan, color]) => (
                             <div
@@ -196,7 +129,6 @@ export const SwitchMap = () => {
                         ))}
                     </div>
 
-                    {/* One SwitchVisual per switch in the stack */}
                     {switchGroups.map(({ label, switchNumber, ports }) => (
                         <div key={switchNumber} className="space-y-2">
                             <h2 className="font-bold text-lg">{label}</h2>

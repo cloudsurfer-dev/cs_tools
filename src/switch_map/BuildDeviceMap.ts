@@ -1,4 +1,6 @@
 import { type InfobloxEntry } from "./ParseInfoBlox.ts";
+import { parseMacTable } from "./ParseMacTable.ts";
+import { parseInfoblox } from "./ParseInfoBlox.ts";
 
 export interface DeviceInfo {
     mac: string;
@@ -33,4 +35,18 @@ export const buildDeviceMap = (
     }
 
     return deviceMap;
+};
+
+/**
+ * Convenience function that parses raw MAC table and Infoblox CSV strings
+ * and returns a DeviceMap. Returns an empty map if either input is empty.
+ */
+export const buildDeviceMapFromRaw = (
+    macTableRaw: string,
+    infobloxRaw: string
+): DeviceMap => {
+    if (!macTableRaw.trim() || !infobloxRaw.trim()) return new Map();
+    const macToPort   = parseMacTable(macTableRaw);
+    const infobloxMap = parseInfoblox(infobloxRaw);
+    return buildDeviceMap(macToPort, infobloxMap);
 };
