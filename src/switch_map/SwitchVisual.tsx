@@ -1,5 +1,5 @@
-import type {Port} from "./Types.ts";
-import type {DeviceMap} from "./BuildDeviceMap.ts";
+import { type Port } from "./Types";
+import { type DeviceMap } from "./BuildDeviceMap";
 
 export type DisplayMode = "status" | "vlan" | "ip" | "hostname";
 
@@ -56,7 +56,9 @@ const buildTooltip = (port: Port | undefined, portNumber: number, deviceMap: Dev
 };
 
 export const SwitchVisual = ({ ports, displayMode, deviceMap, vlanColorMap }: SwitchVisualProps) => {
-    const portNumbers = Array.from({ length: 48 }, (_, i) => i + 1);
+    const maxPort    = Math.max(0, ...ports.map((p) => Number(p.port.match(/(\d+)$/)?.[1] ?? 0)));
+    const portCount  = maxPort >= 48 ? 48 : 24;
+    const portNumbers = Array.from({ length: portCount }, (_, i) => i + 1);
     const odd  = portNumbers.filter((n) => n % 2 !== 0);
     const even = portNumbers.filter((n) => n % 2 === 0);
 
