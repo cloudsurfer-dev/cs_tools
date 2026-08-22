@@ -39,3 +39,20 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+@media print {
+  .no-print, header {
+    display: none !important;
+  }
+  body, main, #root {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+  }
+  .break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+

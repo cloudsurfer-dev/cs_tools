@@ -2,6 +2,7 @@ import './App.css'
 import {MacFixer} from "./pages/MacFixer.tsx";
 import {SwitchMap} from "./pages/SwitchMap.tsx";
 import {Home} from "./pages/Home.tsx";
+import {BarcodeQrGenerator} from "./pages/BarcodeQrGenerator.tsx";
 import { HashRouter, Routes, Route, NavLink } from "react-router-dom";
 
 
@@ -10,7 +11,7 @@ function App() {
         <HashRouter>
             <div className="min-h-screen bg-gray-900 text-zinc-500">
 
-                <header className="w-full border-b border-zinc-800 bg-zinc-900">
+                <header className="w-full border-b border-zinc-800 bg-zinc-900 no-print">
                     <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
 
                         <NavLink to="/" className="text-lg font-bold tracking-tight text-white">
@@ -27,6 +28,9 @@ function App() {
                             <NavLink to="/switchmap" className="hover:text-white transition-colors [&.active]:text-white [&.active]:font-medium">
                                 Switch Map
                             </NavLink>
+                            <NavLink to="/barcodes" className="hover:text-white transition-colors [&.active]:text-white [&.active]:font-medium">
+                                Bar & QR Codes
+                            </NavLink>
                         </nav>
 
                     </div>
@@ -37,6 +41,10 @@ function App() {
                         <Route path="/" element={<Home />} />
                         <Route path="/macfixer" element={<MacFixer />} />
                         <Route path="/SwitchMap" element={<SwitchMap />} />
+                        <Route path="/switchmap" element={<SwitchMap />} />
+                        <Route path="/barcodes" element={<BarcodeQrGenerator />} />
+                        <Route path="/barcode" element={<BarcodeQrGenerator />} />
+                        <Route path="/barqr" element={<BarcodeQrGenerator />} />
                     </Routes>
                 </main>
 
