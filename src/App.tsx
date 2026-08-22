@@ -36,7 +36,7 @@ function App() {
                     </div>
                 </header>
 
-                <main className="mx-auto max-w-8xl px-6 py-10">
+                <main className="w-full px-3 sm:px-6 lg:px-8 py-8">
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/macfixer" element={<MacFixer />} />
